@@ -23,7 +23,7 @@
 -- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -- ======================================================================
 
-local astar = {}
+local AStar = {}
 
 ----------------------------------------------------------------
 -- local variables
@@ -36,23 +36,23 @@ local cachedPaths = nil
 -- local functions
 ----------------------------------------------------------------
 
-function astar.dist(x1, y1, x2, y2)
+function AStar.dist(x1, y1, x2, y2)
 	return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
 end
 
-function astar.dist_between(nodeA, nodeB)
-	return astar.dist(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
+function AStar.distBetween(nodeA, nodeB)
+	return AStar.dist(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
 end
 
-function astar.heuristic_cost_estimate(nodeA, nodeB)
-	return astar.dist(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
+function AStar.heuristicCostEstimate(nodeA, nodeB)
+	return AStar.dist(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
 end
 
-function astar.is_valid_node(node, neighbor)
+function AStar.isValidNode(node, neighbor)
 	return true
 end
 
-function astar.lowest_f_score(set, f_score)
+function AStar.lowestFScore(set, f_score)
 	local lowest, bestNode = INF, nil
 	for _, node in ipairs(set) do
 		local score = f_score[node]
@@ -64,10 +64,10 @@ function astar.lowest_f_score(set, f_score)
 	return bestNode
 end
 
-function astar.neighbor_nodes(theNode, nodes)
+function AStar.neighborNodes(theNode, nodes)
 	local neighbors = {}
-	for _, node in ipairs(nodes) do
-		if theNode ~= node and astaris_valid_node(theNode, node) then
+	for _, node in pairs(nodes) do
+		if theNode ~= node and AStar.isValidNode(theNode, node) then
 			table.insert(neighbors, node)
 		end
 	end
@@ -75,7 +75,7 @@ function astar.neighbor_nodes(theNode, nodes)
 	return neighbors
 end
 
-function astar.not_in(set, theNode)
+function AStar.notIn(set, theNode)
 	for _, node in ipairs(set) do
 		if node == theNode then return false end
 	end
@@ -83,7 +83,7 @@ function astar.not_in(set, theNode)
 	return true
 end
 
-function astar.remove_node(set, theNode)
+function AStar.removeNode(set, theNode)
 	for i, node in ipairs(set) do
 		if node == theNode then
 			set[i] = set[#set]
@@ -93,10 +93,10 @@ function astar.remove_node(set, theNode)
 	end
 end
 
-function astar.unwind_path(flat_path, map, current_node)
+function AStar.unwindPath(flat_path, map, current_node)
 	if map[current_node] then
 		table.insert(flat_path, 1, map[current_node])
-		return astar.unwind_path(flat_path, map, map[current_node])
+		return AStar.unwindPath(flat_path, map, map[current_node])
 	else
 		return flat_path
 	end
@@ -106,40 +106,40 @@ end
 -- pathfinding functions
 ----------------------------------------------------------------
 
-function astar.a_star(start, goal, nodes, valid_node_func)
+function AStar.a_star(start, goal, nodes, valid_node_func)
 	local closedset = {}
 	local openset = { start }
 	local came_from = {}
 
-	if valid_node_func then astar.is_valid_node = valid_node_func end
+	if valid_node_func then AStar.isValidNode = valid_node_func end
 
 	local g_score, f_score = {}, {}
 	g_score[start] = 0
-	f_score[start] = g_score[start] + astar.heuristic_cost_estimate(start, goal)
+	f_score[start] = g_score[start] + AStar.heuristicCostEstimate(start, goal)
 
 	while #openset > 0 do
 
-		local current = astar.lowest_f_score(openset, f_score)
+		local current = AStar.lowestFScore(openset, f_score)
 		if current == goal then
-			local path = astar.unwind_path({}, came_from, goal)
+			local path = AStar.unwindPath({}, came_from, goal)
 			table.insert(path, goal)
 			return path
 		end
 
-		astar.remove_node(openset, current)
+		AStar.removeNode(openset, current)
 		table.insert(closedset, current)
 
-		local neighbors = astar.neighbor_nodes(current, nodes)
+		local neighbors = AStar.neighborNodes(current, nodes)
 		for _, neighbor in ipairs(neighbors) do
-			if astar.not_in(closedset, neighbor) then
+			if AStar.notIn(closedset, neighbor) then
 
-				local tentative_g_score = g_score[current] + astar.dist_between(current, neighbor)
+				local tentative_g_score = g_score[current] + AStar.distBetween(current, neighbor)
 
-				if astar.not_in(openset, neighbor) or tentative_g_score < g_score[neighbor] then
+				if AStar.notIn(openset, neighbor) or tentative_g_score < g_score[neighbor] then
 					came_from[neighbor] = current
 					g_score[neighbor] = tentative_g_score
-					f_score[neighbor] = g_score[neighbor] + astar.heuristic_cost_estimate(neighbor, goal)
-					if astar.not_in(openset, neighbor) then
+					f_score[neighbor] = g_score[neighbor] + AStar.heuristicCostEstimate(neighbor, goal)
+					if AStar.notIn(openset, neighbor) then
 						table.insert(openset, neighbor)
 					end
 				end
@@ -155,15 +155,15 @@ end
 -- exposed functions
 ----------------------------------------------------------------
 
-function astar.clear_cached_paths()
+function AStar.clearCachedPaths()
 	cachedPaths = nil
 end
 
-function astar.distance(x1, y1, x2, y2)
-	return astar.dist(x1, y1, x2, y2)
+function AStar.distance(x1, y1, x2, y2)
+	return AStar.dist(x1, y1, x2, y2)
 end
 
-function astar.path(start, goal, nodes, ignore_cache, valid_node_func)
+function AStar.path(start, goal, nodes, ignore_cache, valid_node_func)
 	if not cachedPaths then cachedPaths = {} end
 	if not cachedPaths[start] then
 		cachedPaths[start] = {}
@@ -171,7 +171,7 @@ function astar.path(start, goal, nodes, ignore_cache, valid_node_func)
 		return cachedPaths[start][goal]
 	end
 
-	local resPath = astar.a_star(start, goal, nodes, valid_node_func)
+	local resPath = AStar.a_star(start, goal, nodes, valid_node_func)
 	if not cachedPaths[start][goal] and not ignore_cache then
 		cachedPaths[start][goal] = resPath
 	end
@@ -179,4 +179,4 @@ function astar.path(start, goal, nodes, ignore_cache, valid_node_func)
 	return resPath
 end
 
-return astar
+return AStar
