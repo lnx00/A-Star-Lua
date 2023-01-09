@@ -24,35 +24,24 @@
 -- ======================================================================
 
 local AStar = {}
-
-----------------------------------------------------------------
--- local variables
-----------------------------------------------------------------
-
 local INF = 1 / 0
-local cachedPaths = nil
+local isValidNode = function (node, neighbor) return true end
 
-----------------------------------------------------------------
--- local functions
-----------------------------------------------------------------
+--[[ Local Functions ]]
 
-function AStar.dist(x1, y1, x2, y2)
+local function dist(x1, y1, x2, y2)
 	return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
 end
 
-function AStar.distBetween(nodeA, nodeB)
-	return AStar.dist(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
+local function distBetween(nodeA, nodeB)
+	return dist(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
 end
 
-function AStar.heuristicCostEstimate(nodeA, nodeB)
-	return AStar.dist(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
+local function heuristicCostEstimate(nodeA, nodeB)
+	return dist(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
 end
 
-function AStar.isValidNode(node, neighbor)
-	return true
-end
-
-function AStar.lowestFScore(set, f_score)
+local function lowestFScore(set, f_score)
 	local lowest, bestNode = INF, nil
 	for _, node in ipairs(set) do
 		local score = f_score[node]
@@ -64,10 +53,10 @@ function AStar.lowestFScore(set, f_score)
 	return bestNode
 end
 
-function AStar.neighborNodes(theNode, nodes)
+local function neighborNodes(theNode, nodes)
 	local neighbors = {}
 	for _, node in pairs(nodes) do
-		if theNode ~= node and AStar.isValidNode(theNode, node) then
+		if theNode ~= node and isValidNode(theNode, node) then
 			table.insert(neighbors, node)
 		end
 	end
@@ -75,7 +64,7 @@ function AStar.neighborNodes(theNode, nodes)
 	return neighbors
 end
 
-function AStar.notIn(set, theNode)
+local function notIn(set, theNode)
 	for _, node in ipairs(set) do
 		if node == theNode then return false end
 	end
@@ -83,7 +72,7 @@ function AStar.notIn(set, theNode)
 	return true
 end
 
-function AStar.removeNode(set, theNode)
+local function removeNode(set, theNode)
 	for i, node in ipairs(set) do
 		if node == theNode then
 			set[i] = set[#set]
@@ -93,54 +82,56 @@ function AStar.removeNode(set, theNode)
 	end
 end
 
-function AStar.unwindPath(flat_path, map, current_node)
-	if map[current_node] then
-		table.insert(flat_path, 1, map[current_node])
-		return AStar.unwindPath(flat_path, map, map[current_node])
+local function unwindPath(flatPath, map, currentNode)
+	if map[currentNode] then
+		table.insert(flatPath, 1, map[currentNode])
+		return unwindPath(flatPath, map, map[currentNode])
 	else
-		return flat_path
+		return flatPath
 	end
 end
 
-----------------------------------------------------------------
--- pathfinding functions
-----------------------------------------------------------------
+--[[ Exposed Functions ]]
 
-function AStar.a_star(start, goal, nodes, valid_node_func)
-	local closedset = {}
-	local openset = { start }
-	local came_from = {}
+function AStar.distance(x1, y1, x2, y2)
+	return dist(x1, y1, x2, y2)
+end
 
-	if valid_node_func then AStar.isValidNode = valid_node_func end
+function AStar.find(start, goal, nodes, validNodeFunc)
+	local closedSet = {}
+	local openSet = { start }
+	local cameFrom = {}
 
-	local g_score, f_score = {}, {}
-	g_score[start] = 0
-	f_score[start] = g_score[start] + AStar.heuristicCostEstimate(start, goal)
+	if validNodeFunc then isValidNode = validNodeFunc end
 
-	while #openset > 0 do
+	local gScore, fScore = {}, {}
+	gScore[start] = 0
+	fScore[start] = gScore[start] + heuristicCostEstimate(start, goal)
 
-		local current = AStar.lowestFScore(openset, f_score)
+	while #openSet > 0 do
+
+		local current = lowestFScore(openSet, fScore)
 		if current == goal then
-			local path = AStar.unwindPath({}, came_from, goal)
+			local path = unwindPath({}, cameFrom, goal)
 			table.insert(path, goal)
 			return path
 		end
 
-		AStar.removeNode(openset, current)
-		table.insert(closedset, current)
+		removeNode(openSet, current)
+		table.insert(closedSet, current)
 
-		local neighbors = AStar.neighborNodes(current, nodes)
+		local neighbors = neighborNodes(current, nodes)
 		for _, neighbor in ipairs(neighbors) do
-			if AStar.notIn(closedset, neighbor) then
+			if notIn(closedSet, neighbor) then
 
-				local tentative_g_score = g_score[current] + AStar.distBetween(current, neighbor)
+				local tentative_g_score = gScore[current] + distBetween(current, neighbor)
 
-				if AStar.notIn(openset, neighbor) or tentative_g_score < g_score[neighbor] then
-					came_from[neighbor] = current
-					g_score[neighbor] = tentative_g_score
-					f_score[neighbor] = g_score[neighbor] + AStar.heuristicCostEstimate(neighbor, goal)
-					if AStar.notIn(openset, neighbor) then
-						table.insert(openset, neighbor)
+				if notIn(openSet, neighbor) or tentative_g_score < gScore[neighbor] then
+					cameFrom[neighbor] = current
+					gScore[neighbor] = tentative_g_score
+					fScore[neighbor] = gScore[neighbor] + heuristicCostEstimate(neighbor, goal)
+					if notIn(openSet, neighbor) then
+						table.insert(openSet, neighbor)
 					end
 				end
 			end
@@ -149,34 +140,6 @@ function AStar.a_star(start, goal, nodes, valid_node_func)
 
 	-- No valid path
 	return nil
-end
-
-----------------------------------------------------------------
--- exposed functions
-----------------------------------------------------------------
-
-function AStar.clearCachedPaths()
-	cachedPaths = nil
-end
-
-function AStar.distance(x1, y1, x2, y2)
-	return AStar.dist(x1, y1, x2, y2)
-end
-
-function AStar.path(start, goal, nodes, ignore_cache, valid_node_func)
-	if not cachedPaths then cachedPaths = {} end
-	if not cachedPaths[start] then
-		cachedPaths[start] = {}
-	elseif cachedPaths[start][goal] and not ignore_cache then
-		return cachedPaths[start][goal]
-	end
-
-	local resPath = AStar.a_star(start, goal, nodes, valid_node_func)
-	if not cachedPaths[start][goal] and not ignore_cache then
-		cachedPaths[start][goal] = resPath
-	end
-
-	return resPath
 end
 
 return AStar
