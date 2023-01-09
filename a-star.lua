@@ -37,17 +37,14 @@ local cachedPaths = nil
 ----------------------------------------------------------------
 
 function astar.dist(x1, y1, x2, y2)
-	
 	return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
 end
 
 function astar.dist_between(nodeA, nodeB)
-
 	return astar.dist(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
 end
 
 function astar.heuristic_cost_estimate(nodeA, nodeB)
-
 	return astar.dist(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
 end
 
@@ -56,7 +53,6 @@ function astar.is_valid_node(node, neighbor)
 end
 
 function astar.lowest_f_score(set, f_score)
-
 	local lowest, bestNode = INF, nil
 	for _, node in ipairs(set) do
 		local score = f_score[node]
@@ -64,30 +60,30 @@ function astar.lowest_f_score(set, f_score)
 			lowest, bestNode = score, node
 		end
 	end
+
 	return bestNode
 end
 
 function astar.neighbor_nodes(theNode, nodes)
-
 	local neighbors = {}
 	for _, node in ipairs(nodes) do
-		if theNode ~= node and is_valid_node(theNode, node) then
+		if theNode ~= node and astaris_valid_node(theNode, node) then
 			table.insert(neighbors, node)
 		end
 	end
+
 	return neighbors
 end
 
 function astar.not_in(set, theNode)
-
 	for _, node in ipairs(set) do
 		if node == theNode then return false end
 	end
+
 	return true
 end
 
 function astar.remove_node(set, theNode)
-
 	for i, node in ipairs(set) do
 		if node == theNode then
 			set[i] = set[#set]
@@ -98,7 +94,6 @@ function astar.remove_node(set, theNode)
 end
 
 function astar.unwind_path(flat_path, map, current_node)
-
 	if map[current_node] then
 		table.insert(flat_path, 1, map[current_node])
 		return astar.unwind_path(flat_path, map, map[current_node])
@@ -112,7 +107,6 @@ end
 ----------------------------------------------------------------
 
 function astar.a_star(start, goal, nodes, valid_node_func)
-
 	local closedset = {}
 	local openset = { start }
 	local came_from = {}
@@ -152,7 +146,9 @@ function astar.a_star(start, goal, nodes, valid_node_func)
 			end
 		end
 	end
-	return nil -- no valid path
+
+	-- No valid path
+	return nil
 end
 
 ----------------------------------------------------------------
@@ -160,17 +156,14 @@ end
 ----------------------------------------------------------------
 
 function astar.clear_cached_paths()
-
 	cachedPaths = nil
 end
 
 function astar.distance(x1, y1, x2, y2)
-
 	return astar.dist(x1, y1, x2, y2)
 end
 
 function astar.path(start, goal, nodes, ignore_cache, valid_node_func)
-
 	if not cachedPaths then cachedPaths = {} end
 	if not cachedPaths[start] then
 		cachedPaths[start] = {}
