@@ -23,9 +23,10 @@
 -- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -- ======================================================================
 
+---@class AStar
 local AStar = {}
 local INF = 1 / 0
-local isValidNode = function (node, neighbor) return true end
+local isValidNode = function(node, neighbor) return true end
 
 --[[ Local Functions ]]
 
@@ -93,11 +94,14 @@ end
 
 --[[ Exposed Functions ]]
 
-function AStar.distance(x1, y1, x2, y2)
-	return dist(x1, y1, x2, y2)
-end
-
-function AStar.find(start, goal, nodes, validNodeFunc)
+-- Finds the shortest path between two nodes using the A* algorithm
+---@generic T
+---@param start T
+---@param goal T
+---@param nodes table<T>
+---@param validNodeFunc? fun(node : T, neighbor : T)
+---@return T[]|nil
+function AStar.path(start, goal, nodes, validNodeFunc)
 	local closedSet = {}
 	local openSet = { start }
 	local cameFrom = {}
